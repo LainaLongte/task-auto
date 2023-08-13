@@ -1,23 +1,15 @@
 from task import Task
-from task_service import Mouse, TaskService
+from inst import Mouse, InstCtrl
 
 
 class TaskController:
 
     @staticmethod
-    def execute_task(task: str):
-        tasks = Task.read_excel_to_objects(task)
+    def execute_task(task_script: str):
+        tasks = Task.read_excel_to_objects(task_script)
         print()
         if tasks:
-            TaskService.execute_tasks(tasks)
-            # key = input('选择功能: 1.做一次 2.循环到死 \n')
-            # if key == '1':
-            #     TaskService.execute_task_list(tasks)
-            # elif key == '2':
-            #     while True:
-            #         TaskService.execute_task_list(tasks)
-            #         time.sleep(0.1)
-            #         print("等待0.1秒")
+            InstCtrl.execute_tasks(tasks)
         else:
             print('输入有误或者已经退出!')
 
