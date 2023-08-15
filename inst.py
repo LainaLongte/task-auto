@@ -1,22 +1,35 @@
 import time
 import pyautogui
 import pyperclip
-
-from task import Task
+from constant import current_window
+from model.task import Task
 
 
 class InstructionExecutor:
     @staticmethod
     def execute_click(task: Task, button="left", clicks=1):
-        Mouse.execute_click(task, button=button, clicks=clicks)
+        try:
+            Mouse.execute_click(task, button=button, clicks=clicks)
+            print("执行点击操作:", task.parameter)
+        except Exception as e:
+            print(f"点击操作失败: {e}")
 
     @staticmethod
     def execute_scroll(task: Task):
-        try:
-            pyautogui.scroll(int(task.parameter))
-            print(f"滚轮滑动{task.parameter}px")
-        except Exception as e:
-            print(f"滚轮滑动操作失败: {e}")
+        retry = task.retry
+        while True:
+            try:
+                pyautogui.scroll(int(task.parameter))
+                if retry > 1:
+                    # print(f"继续执行{retry - 1}次")
+                    retry -= 1
+                elif retry < 1:
+                    continue  # 继续无限重试
+                else:
+                    break
+                print(f"滚轮滑动{task.parameter}px")
+            except Exception as e:
+                print(f"滚轮滑动操作失败: {e}")
 
     @staticmethod
     def execute_wait(task: Task):
@@ -46,12 +59,26 @@ class InstructionExecutor:
         except Exception as e:
             print(f"快捷键操作失败: {e}")
 
+    @staticmethod
+    def execute_move(task: Task):
+        try:
+            parameter = task.parameter
+            x, y = map(int, parameter.split(','))
+
+            if '+' in parameter or '-' in parameter:
+                pyautogui.move(x, y, duration=0.5)  # 使用相对移动
+            else:
+                pyautogui.moveTo(x, y, duration=0.5)  # 移动鼠标到目标坐标
+            print("执行移动操作:", task.parameter)
+        except Exception as e:
+            print(f"移动操作失败: {e}")
+
 
 class Mouse:
     @staticmethod
     def get_cursor_location(image_name):
         try:
-            cursor_location = pyautogui.locateCenterOnScreen(image_name, confidence=0.9)
+            cursor_location = pyautogui.locateCenterOnScreen(image_name, confidence=0.9, region=current_window)
             return cursor_location
         except pyautogui.ImageNotFoundException:
             # 如果找不到图像
@@ -85,7 +112,7 @@ class Mouse:
 class InstCtrl:
     @staticmethod
     def check_task(task: Task):
-        return None
+        return task
 
     @staticmethod
     def execute_tasks(tasks):
@@ -101,30 +128,36 @@ class InstCtrl:
             instruction_executor.execute_click(task)
         elif instruction_type == '点击2':
             instruction_executor.execute_click(task, clicks=2)
-        elif instruction_type == '点击右':
+        elif instruction_type == '点击r':
             instruction_executor.execute_click(task, button="right")
         elif instruction_type == '滚轮':
             instruction_executor.execute_scroll(task)
         elif instruction_type == '等待':
             instruction_executor.execute_wait(task)
-        elif instruction_type == '输入文本':
+        elif instruction_type == '输入':
             instruction_executor.execute_input_text(task)
         elif instruction_type == '热键':
             instruction_executor.execute_hotkey(task)
+        elif instruction_type == '移动':
+            instruction_executor.execute_move(task)
         else:
             print(f"未知的指令类型: {instruction_type}")
 
 
 # 示例：初始化鼠标光标位置并执行左键点击
 if __name__ == '__main__':
-    task_path = './task/'
-    # 示例任务列表
-    task1 = Task('点击', task_path+'16g.png', 1)
-    task2 = Task('点击2', task_path+'签到.png', 1)
-    task3 = Task('点击右', task_path+'user_ico.png', 1)
-    task4 = Task('滚轮', task_path+'分享.png', 1)
-    task5 = Task('等待', 1, 1)
-    task6 = Task('输入文本', 'abc', 1)
-    task7 = Task('键盘', 'win+d', 1)
+    task_path = 'task/'
+    task_list = [
+        # Task('点击', task_path + '16g.png', 1),
+        # Task('点击2', task_path + '签到.png', 1),
+        # Task('点击r', task_path + 'user_ico.png', 1),
+        # Task('滚轮', '+800', 1),
+        Task('等待', 3, 1),
+        # Task('输入', 'abc', 1),
+        Task('移动', '+200,0', 1),
+        Task('等待', 3, 1),
+        Task('热键', 'win+d', 1)
+    ]
 
-    InstCtrl.execute_task(task1)
+    for task in task_list:
+        InstCtrl.execute_task(task)

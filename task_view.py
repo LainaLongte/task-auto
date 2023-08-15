@@ -1,21 +1,4 @@
-import sys
-from io import StringIO
 from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QPlainTextEdit
-
-from task_controller import TaskController
-
-
-class OutputWrapper:
-    def __init__(self, text_edit):
-        self.text_edit = text_edit
-        self.buffer = StringIO()
-
-    def write(self, text):
-        self.buffer.write(text)
-        self.text_edit.setPlainText(self.buffer.getvalue())
-
-    def flush(self):
-        pass  # No need to flush for this implementation
 
 
 class TaskView:
@@ -35,10 +18,6 @@ class TaskView:
         self.button.move(380, 80)
         # 连接按钮的点击事件到槽函数
         self.button.clicked.connect(self.exec_task)
-
-        # 重定向标准输出流到文本编辑框
-        self.output_wrapper = OutputWrapper(self.textEdit)
-        sys.stdout = self.output_wrapper
 
         self.window.show()
         self.app.exec_()
